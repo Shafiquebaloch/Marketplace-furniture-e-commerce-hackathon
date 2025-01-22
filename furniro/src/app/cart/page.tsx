@@ -1,12 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { SlArrowRight } from 'react-icons/sl';
 import { RiDeleteBinLine } from 'react-icons/ri';
-import { GrTrophy } from 'react-icons/gr';
-import { GoVerified } from 'react-icons/go';
-import { FaShippingFast } from 'react-icons/fa';
-import { RiCustomerService2Fill } from 'react-icons/ri';
 import Link from 'next/link';
 import { client } from '@/sanity/lib/client';
 
