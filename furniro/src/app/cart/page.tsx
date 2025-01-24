@@ -1,78 +1,74 @@
-"use client";
+"use client"
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { RiDeleteBinLine } from 'react-icons/ri';
 import Link from 'next/link';
 import { client } from '@/sanity/lib/client';
 
-interface Product {
+interface IProduct {
     _id: string;
-    name: string;
+    title: string;
     description: string;
+    imageUrl: string;
     price: number;
-    originalPrice: number;
-    discount: number;
-    image: string;
-    alt: string;
-    slug: { current: string };
+}
+
+interface ICartItem {
+    product: IProduct;
     quantity: number;
 }
 
 export default function CartPage() {
-    const [sanityData, setSanityData] = useState<Product[]>([]);
-    const [cart, setCart] = useState<string[]>([]); // Update cart type to `string[]` for `_id`
-    const [cartItems, setCartItems] = useState<Product[]>([]);
+    const [sanityData, setSanityData] = useState<IProduct[]>([]);
+    const [cartItems, setCartItems] = useState<ICartItem[]>([]);
 
     useEffect(() => {
-        const fetchProduct = async () => {
-            const query = `*[_type == "product"]{  // Remove $slug if not needed
+        const fetchData = async () => {
+            const query =`*[_type=="product"]{
         _id,
-        name,
-        description,
+        title,
         price,
-        originalPrice,
-        discount,
-        image,
-        alt,
-        slug
+        "imageUrl": productImage.asset->url + "?w=500&h=500&fit=crop"
       }`;
 
-            const data: Product[] = await client.fetch(query); // Specify type of `data`
+            const data: IProduct[] = await client.fetch(query);
             setSanityData(data);
         };
 
-        fetchProduct();  // Corrected function name
+        fetchData();
     }, []);
 
     useEffect(() => {
         const savedCart: string[] = JSON.parse(localStorage.getItem("cart") || "[]");
-        setCart(savedCart);
+        const items = savedCart.map((id) => {
+            const product = sanityData.find((p) => p._id === id);
+            return product ? { product, quantity: 1 } : null; // Initialize quantity to 1
+        }).filter(Boolean) as ICartItem[];
 
-        const items = savedCart
-            .map((id) => sanityData.find((p) => p._id === id))
-            .filter((item): item is Product => Boolean(item)); // Type guard to ensure `Product[]`
         setCartItems(items);
     }, [sanityData]);
 
     const removeFromCart = (id: string) => {
-        const updatedCart = cart.filter((productId) => productId !== id);
-        setCart(updatedCart);
-        localStorage.setItem("cart", JSON.stringify(updatedCart));
-
-        const updatedItems = updatedCart
-            .map((id) => sanityData.find((p) => p._id === id))
-            .filter((item): item is Product => Boolean(item));
-        setCartItems(updatedItems);
+        const updatedCart = cartItems.filter(item => item.product._id !== id);
+        setCartItems(updatedCart);
+        localStorage.setItem("cart", JSON.stringify(updatedCart.map(item => item.product._id)));
     };
 
     const clearCart = () => {
-        setCart([]);
         setCartItems([]);
         localStorage.removeItem("cart");
     };
 
-    const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
+    const updateQuantity = (id: string, newQuantity: number) => {
+        if (newQuantity <= 0) return; // Prevent negative or zero quantity
+        const updatedItems = cartItems.map(item =>
+            item.product._id === id ? { ...item, quantity: newQuantity } : item
+        );
+        setCartItems(updatedItems);
+        localStorage.setItem("cart", JSON.stringify(updatedItems.map(item => item.product._id)));
+    };
 
+    const totalPrice = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
     return (
         <div className="max-w-[1440px] mx-auto overflow-hidden">
@@ -91,29 +87,46 @@ export default function CartPage() {
                     <div className="w-full hidden lg:w-[817px] h-[55px] bg-[#F9F1E7] rounded-lg md:flex justify-between items-center px-[30px]">
                         <h1 className="font-[500] text-[16px] leading-6">Product</h1>
                         <h1 className="font-[500] text-[16px] leading-6">Price</h1>
+                        <h1 className="font-[500] text-[16px] leading-6">Quantity</h1>
                         <h1 className="font-[500] text-[16px] leading-6">Actions</h1>
-
                     </div>
 
                     {cartItems.length > 0 ? (
                         cartItems.map(item => (
-                            <div key={item._id} className="w-full lg:w-[817px] h-auto flex flex-col md:flex-row justify-between items-center pr-[30px] gap-4 lg:gap-0">
+                            <div key={item.product._id} className="w-full lg:w-[817px] h-auto flex flex-col md:flex-row justify-between items-center pr-[30px] gap-4 lg:gap-0">
                                 <div className="flex justify-start items-center gap-3">
-                                    <div className="flex justify-center items-center bg-[#F9F1E7] size-[105px] rounded-[10px]">
-                                        <Image src={item.image} alt={item.name} width={90} height={50} className='rounded-lg object-scale-down w-full h-full' />
+
+                                    <div className='flex flex-col gap-3'>
+                                        <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F] text-center">{item.product.title}</h1>
+                                        <Image src={item.product.imageUrl} alt={item.product.title} width={90} height={50} className='rounded-lg object-scale-down w-full h-full mb-12' />
                                     </div>
-                                    <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">{item.name}</h1>
+
                                 </div>
-                                <h1 className="font-[500] text-[16px] leading-6 text-[#9F9F9F]">Rs. {item.price}</h1>
+                                <h1 className="font-[500] text-[16px] leading-6 text-[#9F9F9F]">Rs. {item.product.price}</h1>
 
+                                {/* Quantity input */}
+                                <input
+                                    type="number"
+                                    value={item.quantity}
+                                    onChange={(e) => updateQuantity(item.product._id, parseInt(e.target.value))}
+                                    className="w-[60px] h-[30px] text-center border border-gray-300 px-3 py-6 rounded"
+                                />
 
-                                <button onClick={() => removeFromCart(item._id)}>
+                                <button onClick={() => removeFromCart(item.product._id)}>
                                     <RiDeleteBinLine className="text-[#B88E2F] scale-150 hover:text-red-700 duration-300 ease-in-out hover:scale-[2]" />
                                 </button>
                             </div>
                         ))
                     ) : (
-                        <p className="text-center">Your cart is empty</p>
+                        <div className="flex flex-col justify-center items-center w-full h-64 bg-[#F9F1E7] rounded-lg border-2 border-dashed border-[#B88E2F] mt-20 mb-24 shadow-lg">
+                            <RiDeleteBinLine className="text-[#B88E2F] scale-150 mb-4" />
+                            <h1 className="font-semibold text-3xl text-[#B88E2F]">Your Cart is Empty</h1>
+                            <p className="text-center text-[#9F9F9F] mt-3">It appears you haven&#39;t added anything to your cart yet. Explore our collection and find what you love!</p>
+                            <Link href="/shop" className="mt-6 px-8 py-3 border-2 border-[#B88E2F] text-[#B88E2F] rounded-full font-medium text-lg hover:bg-[#B88E2F] hover:text-white transition-all duration-300 ease-in-out">
+                                Start Shopping
+                            </Link>
+                        </div>
+
                     )}
                 </div>
 
@@ -138,6 +151,5 @@ export default function CartPage() {
                 </div>
             </div>
         </div>
-
     );
 }
