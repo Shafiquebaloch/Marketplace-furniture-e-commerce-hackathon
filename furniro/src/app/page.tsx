@@ -14,12 +14,14 @@ interface Product {
 
 const getProducts = async () => {
   const products = await client.fetch(
-    `*[_type=="product"][0..7]{
-       _id,
-       title,
-       price,
-       productImage
-    }`
+    `*[_type == "product"] {
+  title,
+  description,
+  price,
+  productImage,
+  tags
+}
+`
   );
   return products;
 };

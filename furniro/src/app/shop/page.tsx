@@ -27,12 +27,17 @@ const ShopPage = () => {
   const getProducts = async () => {
     try {
       const productsData = await client.fetch(
-        `*[_type=="product"]{
-          _id,
+        `*[_type == "product"] {
           title,
+         description,
+          productImage,
           price,
-          productImage
-        }`
+         tags,
+        discountPercentage,
+       isNew
+}
+
+    `
       );
       setProducts(productsData);
     } catch (error) {
@@ -89,7 +94,7 @@ const ShopPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 p-6 sm:px-8 lg:px-16 bg-[#F8F9FA]">
           {products.map((product) => (
             <div
-              key={product._id}
+              key={product._id} // Ensure each product has a unique key
               className="bg-white rounded-lg shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-105"
             >
               {/* Product Image */}
@@ -98,8 +103,8 @@ const ShopPage = () => {
                   <Image
                     src={urlFor(product.productImage).url()}
                     alt={product.title}
-                    layout="fill"
-                    objectFit="cover"
+                    fill // Use the new fill property for image sizing
+                    style={{ objectFit: "cover" }} // Apply objectFit as style
                     className="rounded-t-lg"
                   />
                 </div>

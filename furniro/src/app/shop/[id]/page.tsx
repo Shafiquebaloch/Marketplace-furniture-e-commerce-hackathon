@@ -34,12 +34,15 @@ export default function ProductDetailPage() {
       return;
     }
 
-    const query = `*[_type == "product" && _id == $id] {
-      _id,
+    const query = 
+    `*[_type == "product" && _id == $id] {
       title,
-      price,
-      description,
-      "imageUrl": productImage.asset->url + "?w=500&h=500&fit=crop"
+  description,
+  productImage,
+  price,
+  tags,
+  discountPercentage,
+  isNew
     }`;
 
     const fetchProduct = async () => {
