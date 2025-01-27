@@ -1,16 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { SlArrowRight } from "react-icons/sl";
-import { FaStarHalf } from "react-icons/fa6";
-import { FaStar } from "react-icons/fa";
 import { FaFacebook } from "react-icons/fa";
 import { FaLinkedin } from "react-icons/fa";
 import { FaTwitter } from "react-icons/fa";
 import { client } from '@/sanity/lib/client';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from "next/navigation";
-import Head from 'next/head';
 
 interface IProducts {
   _id: string;
@@ -23,75 +18,42 @@ interface IProducts {
 export default function ProductDetailPage() {
   const [product, setProduct] = useState<IProducts | null>(null);
   const { id } = useParams();
-  const [isAdded, setIsAdded] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
+  // Moved `query` inside useEffect to avoid dependency issues
   useEffect(() => {
-    if (!id) {
-      setError("Product ID is missing.");
-      setLoading(false);
-      return;
-    }
+    if (id) {
+      const query = `*[_type == "product" && _id == $id] {
+        _id,
+        title,
+        price,
+        description,
+        "imageUrl": productImage.asset->url + "?w=500&h=500&fit=crop"
+      }`;
 
-    const query = 
-    `*[_type == "product" && _id == $id] {
-      title,
-  description,
-  productImage,
-  price,
-  tags,
-  discountPercentage,
-  isNew
-    }`;
-
-    const fetchProduct = async () => {
-      try {
-        const productDetail = await client.fetch(query, { id });
-        if (productDetail.length > 0) {
-          setProduct(productDetail[0]);
-        } else {
-          setError("Product not found.");
+      const fetchProduct = async () => {
+        try {
+          const productDetail = await client.fetch(query, { id });
+          if (productDetail.length > 0) {
+            setProduct(productDetail[0]);
+          }
+        } catch (error) {
+          console.error("Error fetching product: ", error);
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        console.error("Error fetching product: ", err);
-        setError("Failed to load product details. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchProduct();
-  }, [id]);
-
-  const HandleAddToCart = () => {
-    if (!product) {
-      console.log("Product is null or undefined.");
-      return;
+      fetchProduct();
     }
+  }, [id]);  // We only need `id` as dependency here
 
-    try {
-      const currentCart = JSON.parse(localStorage.getItem("cart") || "[]");
-
-      const productAdded = currentCart.findIndex(
-        (item: IProducts) => item._id === product._id
-      );
-
-      if (productAdded !== -1) {
-        currentCart[productAdded].quantity += 1;
-      } else {
-        currentCart.push({ ...product, quantity: 1 });
-      }
-
-      localStorage.setItem("cart", JSON.stringify(currentCart));
-
-      setIsAdded(true);
-      setTimeout(() => setIsAdded(false), 3000);
-    } catch (error) {
-      console.error("Error adding to cart: ", error);
-    }
+  const addToCart = (id: string) => {
+    const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const updatedCart = [...savedCart, id];
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    alert('Product added to cart!');
   };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[300px]">
@@ -100,132 +62,145 @@ export default function ProductDetailPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div>
-          <p className="text-xl">{error}</p>
-          <Link href="/shop">
-            <a className="text-blue-500">Go back to shop</a>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
+  // Show error message if product not found
   if (!product) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div>
-          <p className="text-xl">Product not found</p>
-          <Link href="/shop">
-            <a className="text-blue-500">Go back to shop</a>
-          </Link>
-        </div>
+        <p className="text-xl">Product not found</p>
       </div>
     );
   }
 
   return (
     <>
-      <Head>
-        <title>{product.title} - Shop</title>
-        <meta name="description" content={product.description} />
-        <meta property="og:image" content={product.imageUrl} />
-      </Head>
+      <nav className="bg-[#F9F1E7] h-24 mt-20 flex items-center gap-8 pl-20">
+        <ul className="flex items-center gap-2 list-none">
+          <li className="text-[#9F9F9F]">Home</li>
+          <Image src="/images/black-arr.png" alt="arrow" width={20} height={20} />
+          <li className="text-[#9F9F9F]">Shop</li>
+          <Image src="/images/black-arr.png" alt="arrow" width={20} height={20} />
+          <li className="text-[#9F9F9F]">{product.title}</li>
+        </ul>
+      </nav>
 
-      <div className='max-w-[1440px] mx-auto overflow-hidden mt-20'>
-        <div className="h-full md:h-[100px] bg-[#F9F1E7] flex justify-start items-center py-2 md:py-0 px-5 md:px-[100px] gap-[24px] mb-[56.6px]">
-          <div className="flex justify-center items-center gap-[20px]">
-            <Link href="/" className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F] hover:underline underline-offset-4 hover:text-black duration-300 ease-in-out">Home</Link>
-            <h1 className="flex justify-center items-center"><SlArrowRight className='scale-[1]' /></h1>
-          </div>
-          <div className="flex justify-center items-center gap-[20px]">
-            <Link href="/shop" className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F] hover:underline underline-offset-4 hover:text-black duration-300 ease-in-out">Shop</Link>
-            <h1 className="flex justify-center items-cnter"><SlArrowRight className='scale-[1]' /></h1>
-          </div>
-          <div className="flex justify-center items-center text-[#9F9F9F] font-[400] ">|</div>
-          <div className="font-[400] text-[16px] text-black leading-[24px]">{product.title}</div>
+      {/* Main Content */}
+      <div className="flex flex-col lg:flex-row items-center lg:items-start justify-evenly mt-16 px-4 lg:px-24 gap-12">
+        {/* Sidebar Thumbnails */}
+        <div className="flex flex-col gap-4 items-center lg:items-start">
+          {[1, 2, 3, 4].map((num) => (
+            <div key={num}>
+              <Image
+                src={product.imageUrl}
+                alt={product.title}
+                width={76}
+                height={80}
+                className="w-20 h-20 object-contain"
+              />
+            </div>
+          ))}
         </div>
 
-        <div className="flex flex-col lg:flex-row justify-center items-center md:items-start gap-[105px] lg:gap-[10px] xl:gap-[105px] mx-5 md:mx-[100px] lg:mx-2 xl:mx-[100px] mb-[56.6px] lg:w-screen xl:w-full">
-          <div className="flex flex-col lg:flex-row justify-center items-start gap-[32px]">
-            <div className="grid grid-cols-1 grid-rows-4 justify-center items-center gap-[32px] lg:hidden xl:grid">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="flex justify-center items-center bg-[#F9F1E7] w-[76px] h-[80px] rounded-[10px]">
-                  <Image src={product.imageUrl} alt={product.title} width={83} height={55} className='rounded-lg object-scale-down' />
-                </div>
-              ))}
-            </div>
 
-            <div className="md:flex justify-center items-center bg-[#F9F1E7] p-6 h-[500px] w-[423px] rounded-[10px] hidden">
-              <Image src={product.imageUrl} alt={product.title} width={481} height={391} className='rounded-lg w-[481px] h-[500px] object-scale-down' />
-            </div>
+
+        {/* Product Image Container */}
+        <div className="bg-[#F9F1E7] w-full lg:w-1/2 h-auto flex items-center justify-center p-4 rounded-md">
+          <Image src={product.imageUrl} alt={product.title} width={500} height={600} className="max-w-full h-auto" />
+        </div>
+
+        {/* Product Details */}
+        <div className="flex flex-col max-w-lg">
+          <h1 className="text-4xl font-semibold mb-2">{product.title}</h1>
+          <span className="text-2xl text-[#9F9F9F]">{product.price}</span>
+
+          <div className="flex items-center gap-3 mt-4">
+            <Image src="/images/five-star.png" alt="star rating" width={124} height={20} />
+            <div className="border-l border-[#9F9F9F] h-3"></div>
+            <span className="text-[#9F9F9F] text-sm">5 Customer Reviews</span>
           </div>
 
-          <div className="flex flex-col justify-center items-center md:items-start gap-[18px]">
-            <div className="">
-              <h1 className="font-[400] text-[42px] leading-[63px]">{product.title}</h1>
-              <h1 className="font-[500] text-[24px] leading-[36px] text-[#9F9F9F]">Rs. {product.price}</h1>
+          <p className="mt-6 text-sm lg:text-base">
+            {product.description}
+          </p>
+
+          {/* Size Selection */}
+          <h2 className="mt-14 text-[#9F9F9F]">Size:</h2>
+          <div className="flex items-center gap-3 mt-4">
+            <button className="w-8 h-8 bg-[#B88E2F] text-white rounded flex items-center justify-center text-sm hover:bg-[#A77A27]">
+              L
+            </button>
+            <button className="w-8 h-8 bg-[#F9F1E7] rounded flex items-center justify-center text-sm hover:bg-[#B88E2F] hover:text-white">
+              XL
+            </button>
+            <button className="w-8 h-8 bg-[#F9F1E7] rounded flex items-center justify-center text-sm hover:bg-[#B88E2F] hover:text-white">
+              XS
+            </button>
+          </div>
+
+          {/* Color Selection */}
+          <h2 className="mt-14 text-[#9F9F9F]">Color:</h2>
+          <div className="flex items-center gap-3 mt-4">
+            <div className="w-8 h-8 bg-[#816DFA] rounded-full"></div>
+            <div className="w-8 h-8 bg-black rounded-full"></div>
+            <div className="w-8 h-8 bg-[#B88E2F] rounded-full"></div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 mt-6">
+            <button onClick={() => addToCart(product._id)} className="w-[123px] h-[64px] rounded-2xl border border-black mt-4 sm:mt-0 sm:ml-3">
+              Add To Cart
+            </button>
+
+          </div>
+
+          {/* Divider */}
+          <div className="border-b border-[#9F9F9F] w-full mt-14"></div>
+          <div className="mt-8 flex items-center justify-start gap-8">
+            <div className="flex flex-col text-[#9F9F9F]">
+              <h4>SKU</h4>
+              <h4>Category</h4>
+              <h4>Tags</h4>
+              <h4>Share</h4>
             </div>
-
-            <div className="flex justify-center items-center gap-[20px] mt-2">
-              <div className="flex justify-center items-center gap-1">
-                <FaStar className='scale-[1] text-[#FFC700]' />
-                <FaStar className='scale-[1] text-[#FFC700]' />
-                <FaStar className='scale-[1] text-[#FFC700]' />
-                <FaStar className='scale-[1] text-[#FFC700]' />
-                <FaStarHalf className='scale-[1] text-[#FFC700]' />
-              </div>
-              <div className="font-[400] text-xl text-[#9F9F9F]">|</div>
-              <div className="font-[400] text-[13px] leading-[19.5px] text-[#9F9F9F]">5 Customer Review</div>
-            </div>
-            
-            <h1 className="font-[400] text-[13px] text-[#9F9F9F] text-center md:text-left w-screen md:w-full mx-5 md:mx-0 custom:w-[424px] mt-3">{product.description}</h1>
-
-            <div className="flex flex-col md:flex-row justify-center items-center gap-[12px]">
-              <button
-                onClick={HandleAddToCart}
-                className="w-[215px] h-[64px] flex justify-center px-3 rounded-[10px] items-center gap-3 border border-[#9F9F9F] bg-white hover:bg-black/10 hover:shadow-lg shadow-black duration-300 ease-in-out">
-                Add To Cart
-              </button>
-            </div>
-
-            {isAdded && (
-              <div className="text-green-600 font-bold mt-3">
-                Product successfully added to cart!
-              </div>
-            )}
-
-            <div className="w-[605.1px] h-[1px] bg-[#D9D9D9] my-[40px]"></div>
-
-            <div className="flex justify-center items-center gap-[12px]">
-              <div className="flex flex-col justify-start items-start gap-2">
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">SKU</h1>
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">Category</h1>
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">Tags</h1>
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">Share</h1>
-              </div>
-              <div className="flex flex-col justify-start items-start gap-2">
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">:</h1>
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">:</h1>
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">:</h1>
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">:</h1>
-              </div>
-              <div className="flex flex-col justify-start items-start gap-2">
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">SS001</h1>
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">Sofas</h1>
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#9F9F9F]">Sofa, Chair, Home, Shop</h1>
-                <h1 className="font-[400] text-[16px] leading-[24px] text-[#000000] flex justify-center items-center gap-[12px]">
-                  <FaFacebook />
-                  <FaLinkedin />
-                  <FaTwitter />
-                </h1>
+            <div className="flex flex-col text-[#9F9F9F]">
+              <h4>: SS001</h4>
+              <h4>: Sofas</h4>
+              <h4>: Sofa, Chair, Home, Shop</h4>
+              <div className="flex items-center justify-start gap-3">
+                :
+                <FaFacebook />
+                <FaLinkedin />
+                <FaTwitter />
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Product Description Section */}
+      <div className="w-full border-b border-[#9F9F9F] mt-20 sm:block hidden"></div>
+      <div className="h-[744px] sm:block hidden">
+        <div className="flex flex-col sm:flex-row items-start justify-center gap-6 sm:gap-16 mt-10 text-[24px]">
+          <h1 className="font-semibold">Description</h1>
+          <span className="text-[#9F9F9F]">Additional Information</span>
+          <span className="text-[#9F9F9F]">Reviews [5]</span>
+        </div>
+        <div className="flex items-center flex-col mt-10">
+          <p className="text-[#9F9F9F] w-full sm:w-[1026px] sm:h-[48px] px-4">
+            Embodying the raw, wayward spirit of rock ‘n’ roll, the Kilburn portable active stereo speaker takes the unmistakable look and sound of Marshall, unplugs the chords, and takes the show on the road.
+          </p>
+          <br />
+          <p className="text-[#9F9F9F] w-full sm:w-[1026px] sm:h-[48px] px-4">
+            Embodying the raw, wayward spirit of rock ‘n’ roll, the Kilburn portable active stereo speaker takes the unmistakable look and sound of Marshall, unplugs the chords, and takes the show on the road.
+          </p>
+        </div>
+        <div className="flex flex-col gap-6 sm:flex-row items-center justify-around mt-10">
+          <Image src={product.imageUrl} alt={product.title} width={405} height={248} />
+          <Image src={product.imageUrl} alt={product.title} width={405} height={248} />
+        </div>
+      </div>
+
+
+
     </>
-  );
+  )
 }
