@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { FaFacebook } from "react-icons/fa";
 import { FaLinkedin } from "react-icons/fa";
 import { FaTwitter } from "react-icons/fa";
-import { client } from '@/sanity/lib/client';
+import { client } from '../../../sanity/lib/client';
 import Image from 'next/image';
 import { useParams } from "next/navigation";
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import Image from 'next/image';
-import { client } from '@/sanity/lib/client';
-import { urlFor } from '@/sanity/lib/image';
-import HeroSection from '@/components/HeroSection';
+import { client } from '../sanity/lib/client';
+import { urlFor } from '../sanity/lib/image';
+import HeroSection from '../components/HeroSection';
 import Link from 'next/link';
 
 interface Product {

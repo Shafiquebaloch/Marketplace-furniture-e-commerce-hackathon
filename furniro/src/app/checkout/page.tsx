@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import { GoDotFill } from "react-icons/go";
 import { FaRegCircle } from "react-icons/fa";
-import { client } from '@/sanity/lib/client';
+import { client } from '../../sanity/lib/client';
 import React, { useState, useEffect } from "react";
 import { FaCheckCircle } from "react-icons/fa"; // Success icon
 
