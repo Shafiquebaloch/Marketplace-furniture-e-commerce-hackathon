@@ -3,9 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { FaFacebook } from "react-icons/fa";
 import { FaLinkedin } from "react-icons/fa";
 import { FaTwitter } from "react-icons/fa";
-import { client } from '../../../sanity/lib/client';
+import { client } from '@/sanity/lib/client';
 import Image from 'next/image';
 import { useParams } from "next/navigation";
+import Navbar from "../../../components/Navbar";
+import Footer from "../../../components/Footer";
+import Feature from "../../../components/Feature";
 
 interface IProducts {
   _id: string;
@@ -23,13 +26,17 @@ export default function ProductDetailPage() {
   // Moved `query` inside useEffect to avoid dependency issues
   useEffect(() => {
     if (id) {
-      const query = `*[_type == "product" && _id == $id] {
+      const query = `*[_type == "product"]{
         _id,
         title,
-        price,
         description,
-        "imageUrl": productImage.asset->url + "?w=500&h=500&fit=crop"
-      }`;
+        price,
+        "imageUrl": productImage.asset->url + "?w=500&h=500&fit=crop",
+        tags,
+        dicountPercentage,
+        isNew
+      }`
+      
 
       const fetchProduct = async () => {
         try {
@@ -73,6 +80,7 @@ export default function ProductDetailPage() {
 
   return (
     <>
+     <Navbar />
       <nav className="bg-[#F9F1E7] h-24 mt-20 flex items-center gap-8 pl-20">
         <ul className="flex items-center gap-2 list-none">
           <li className="text-[#9F9F9F]">Home</li>
@@ -99,10 +107,7 @@ export default function ProductDetailPage() {
             </div>
           ))}
         </div>
-
-
-
-        {/* Product Image Container */}
+ {/* Product Image Container */}
         <div className="bg-[#F9F1E7] w-full lg:w-1/2 h-auto flex items-center justify-center p-4 rounded-md">
           <Image src={product.imageUrl} alt={product.title} width={500} height={600} className="max-w-full h-auto" />
         </div>
@@ -198,8 +203,8 @@ export default function ProductDetailPage() {
           <Image src={product.imageUrl} alt={product.title} width={405} height={248} />
         </div>
       </div>
-
-
+  <Feature/>
+   <Footer/>
 
     </>
   )

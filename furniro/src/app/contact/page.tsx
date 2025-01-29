@@ -1,9 +1,13 @@
 import React from 'react';
 import Image from 'next/image';
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
+import Feature from "../../components/Feature";
 
 const ContactPage = () => {
     return (
         <>
+        <Navbar />
             <div>
         <Image
           src={"/images/contact.png"}
@@ -75,7 +79,8 @@ const ContactPage = () => {
                     </button>
                 </div>
             </div>
-
+         <Feature/>
+         <Footer />
         </>
     );
 };

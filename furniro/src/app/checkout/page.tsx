@@ -5,6 +5,9 @@ import { FaRegCircle } from "react-icons/fa";
 import { client } from '../../sanity/lib/client';
 import React, { useState, useEffect } from "react";
 import { FaCheckCircle } from "react-icons/fa"; // Success icon
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
+import Feature from "../../components/Feature";
 
 
 interface IProduct {
@@ -68,6 +71,7 @@ const Page = () => {
     };
     return (
         <>
+        <Navbar />
             <div>
                 <Image
                     src={"/images/checkout.png"}
@@ -307,6 +311,8 @@ const Page = () => {
                     </div>
                 </div>
             </div>
+            <Feature/>
+            <Footer />
         </>
     )
 }

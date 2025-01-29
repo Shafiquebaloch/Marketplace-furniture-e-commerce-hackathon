@@ -1,5 +1,9 @@
 import React from 'react';
 import Image from 'next/image';
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
+import Feature from "../../components/Feature";
+
 
 // Banner Section
 const Banner = () => (
@@ -125,6 +129,7 @@ const Pagination = () => {
 // Blog Page Component
 const BlogPage = () => (
   <>
+  <Navbar />
     <Banner />
     <div className="flex flex-col lg:flex-row lg:justify-between items-start lg:h-[2210px] px-4 lg:px-0 mt-16">
       {/* Left Section */}
@@ -155,6 +160,8 @@ const BlogPage = () => (
       </div>
     </div>
     <Pagination />
+    <Feature />
+    <Footer />
   </>
 );
 

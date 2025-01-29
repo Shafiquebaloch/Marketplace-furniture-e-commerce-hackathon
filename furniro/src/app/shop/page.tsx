@@ -4,7 +4,9 @@ import Image from "next/image";
 import { client } from "../../sanity/lib/client";
 import { urlFor } from "../../sanity/lib/image";
 import Link from "next/link";
-
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
+import Feature from "../../components/Feature";
 // Define the type for the product image
 interface ProductImage {
   asset: {
@@ -28,10 +30,14 @@ const ShopPage = () => {
     try {
       const productsData = await client.fetch(
         `*[_type=="product"]{
-          _id,
-          title,
-          price,
-          productImage
+          __id,
+           title,
+          description,
+             price,
+         productImage,
+          tags,
+        discountPercentage,
+         isNew
         }`
       );
       setProducts(productsData);
@@ -48,6 +54,7 @@ const ShopPage = () => {
 
   return (
     <>
+    <Navbar />
       {/* Hero Section */}
       <div>
         <Image
@@ -142,7 +149,7 @@ const ShopPage = () => {
                   Rp {product.price.toLocaleString()}
                 </span>
                 <Link href={`/shop/${product._id}`}>
-                  <button className="mt-4 w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition-all">
+                  <button className="mt-4 w-full bg-red-600 text-white py-2 rounded-md hover:bg-gray-800 transition-all">
                     View Product Detail
                   </button>
                 </Link>
@@ -151,6 +158,8 @@ const ShopPage = () => {
           ))}
         </div>
       )}
+      <Feature/>
+        <Footer />
     </>
   );
 };

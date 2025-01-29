@@ -4,6 +4,10 @@ import { client } from '../sanity/lib/client';
 import { urlFor } from '../sanity/lib/image';
 import HeroSection from '../components/HeroSection';
 import Link from 'next/link';
+import Navbar from '../components/Navbar'; // Import Header
+import Footer from '../components/Footer'; // Import Footer
+import Feature from '../components/Feature'; // Import Feature component
+import Explore from '../components/explore';
 
 interface Product {
   _id: string;
@@ -14,14 +18,14 @@ interface Product {
 
 const getProducts = async () => {
   const products = await client.fetch(
-    `*[_type == "product"] {
-  title,
-  description,
-  price,
-  productImage,
-  tags
-}
-`
+    `*[_type == "product"][0..7]{
+      _id,
+      title,
+      description,
+      price,
+      productImage,
+      tags
+    }`
   );
   return products;
 };
@@ -29,8 +33,15 @@ const getProducts = async () => {
 const MyProducts = async () => {
   const products = await getProducts();
 
+  // Handle empty products array
+  if (!products || products.length === 0) {
+    return <p>No products available at the moment.</p>;
+  }
+
   return (
     <>
+      <Navbar /> {/* Render Header */}
+      
       <HeroSection />
       <h1 className="text-[40px] text-center font-bold mt-14 mb-6">Our Products</h1>
 
@@ -45,7 +56,7 @@ const MyProducts = async () => {
             {product.productImage && (
               <div className="relative w-[285px] h-[285px]">
                 <Image
-                  src={urlFor(product.productImage).url()}
+                  src={urlFor(product.productImage).url() || '/images/default-product.jpg'} // fallback image
                   alt={product.title}
                   layout="fill"
                   objectFit="cover"
@@ -55,17 +66,19 @@ const MyProducts = async () => {
             )}
 
             {/* Product Title */}
-            <h3 className="text-[24px] font-semibold text-[#3A3A3A] ml-6 mt-4 bold">{product.title}</h3>
+            <h3 className="text-[24px] font-semibold text-[#3A3A3A] ml-6 mt-4">{product.title}</h3>
 
             {/* Product Price */}
             <div className="flex justify-center mt-2">
-              <span className="text-[16px] font-semibold text-[#3A3A3A] bold text-2xl">
+              <span className="text-[16px] font-semibold text-[#3A3A3A] text-2xl">
                 Rp {product.price.toLocaleString()}
               </span>
             </div>
           </div>
         ))}
       </div>
+
+    
 
       {/* Show More Button */}
       <div className="flex items-center justify-center mt-6">
@@ -75,52 +88,9 @@ const MyProducts = async () => {
           </button>
         </Link>
       </div>
-
-      {/* Additional Content */}
-      <div className="h-auto bg-[#FCF8F3] mt-10 flex flex-col lg:flex-row items-center justify-around">
-        <div className="text-center lg:text-left px-6 lg:px-0">
-          <h1 className="text-[32px] sm:text-[36px] md:text-[40px] font-bold w-[90%] md:w-[422px]">
-            50+ Beautiful rooms inspiration
-          </h1>
-          <p className="text-[14px] sm:text-[16px] mt-4 md:mt-6 w-[90%] md:w-[368px]">
-            Our designer already made a lot of beautiful prototypes of rooms that inspire you.
-          </p>
-          <button className="w-[70%] md:w-[176px] h-[48px] bg-[#B88E2F] text-[#FFFFFF] mt-8">
-            Explore More
-          </button>
-        </div>
-
-        <div className="mt-8 lg:mt-0">
-          <Image
-            src="/images/img6.png"
-            alt="last-1"
-            width={404}
-            height={582}
-            className="w-full lg:w-[404px] lg:h-[582px]"
-          />
-        </div>
-
-        <div className="mt-8 lg:mt-0">
-          <Image
-            src="/images/img5.png"
-            alt="last-1"
-            width={372}
-            height={486}
-            className="w-full lg:w-[372px] lg:h-[486px]"
-          />
-        </div>
-      </div>
-
-      {/* Social Media Section */}
-      <div className="md:flex flex-col justify-center items-center mb-[56.6px] hidden mt-36">
-        <div className="flex flex-col justify-center items-center">
-          <h1 className="text-[#616161] font-[600] text-[20px] text-center leading-[30px] ">Share your setup with </h1>
-          <h1 className="text-[#3A3A3A] font-[700] text-[40px] text-center leading-[48px] ">#FuniroFurniture </h1>
-        </div>
-        <div className="flex justify-center items-center">
-          <Image src="/images/setup.png" alt="setup" width={1799} height={721} className="w-screen custom:w-[1799px]"></Image>
-        </div>
-      </div>
+  <Explore/>
+  <Feature /> 
+      <Footer /> 
     </>
   );
 };
